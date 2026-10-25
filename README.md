@@ -2,24 +2,16 @@
 
 A work-in-progress chess AI, built from scratch in [JAX](https://github.com/jax-ml/jax) and [Flax](https://github.com/google/flax).
 
-The plan is a set of models, each trained a different way:
+**Play online at:** coming soon
+
+## Plans
+
+A set of models, each trained a different way, all playable online:
 
 - **Distilled:** taught from other chess engines' evaluations in public datasets.
 - **Self-play:** learns only by playing against itself, with no human or engine knowledge.
-- **Human games:** learns purely from games people play against it on a public site (link coming soon).
-
-## Setup
-
-Needs Linux or WSL and an NVIDIA GPU.
-
-```bash
-git clone https://github.com/s9oon/chess-bot.git
-cd chess-bot
-bash scripts/install.sh
-```
-
-Settings are in `config.py`.
+- **Human games:** learns purely from games people play against it online.
 
 ## Documentation
 
-For development, training and more, see [`docs/`](docs/).
+For setup, development, training and more, see [`docs/`](docs/).
