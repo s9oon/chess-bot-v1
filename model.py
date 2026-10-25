@@ -6,7 +6,6 @@ import jax.numpy as jnp
 from flax import nnx
 
 from config import CHANNELS, HIDDEN
-from encoding import NUM_PLANES
 
 
 class ChessCNN(nnx.Module):
@@ -14,7 +13,7 @@ class ChessCNN(nnx.Module):
 
     def __init__(self, rngs: nnx.Rngs):
         # conv1 reads every input feature map from encoding.py (18: pieces, turn, castling, en passant).
-        self.conv1 = nnx.Conv(NUM_PLANES, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
+        self.conv1 = nnx.Conv(18, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
         self.conv2 = nnx.Conv(CHANNELS, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
         self.conv3 = nnx.Conv(CHANNELS, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
 
@@ -40,24 +39,6 @@ class ChessCNN(nnx.Module):
         x = self.linear2(x)            # (batch, 1): the score
         x = jnp.tanh(x)               # squish the score into -1 (black winning) .. +1 (white winning)
         return x[:, 0]                 # (batch,): one score per board
-
-
-def save_model(model: ChessCNN, path: Path) -> None:
-    """Save every weight (and batchnorm's running averages) to a .npz file."""
-    leaves = jax.tree.leaves(nnx.state(model))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, *[np.asarray(leaf) for leaf in leaves])
-
-
-def load_model(path: Path) -> ChessCNN:
-    """Build a fresh ChessCNN, then overwrite its random weights with the saved ones."""
-    model = ChessCNN(rngs=nnx.Rngs(0))
-    saved = np.load(path)
-    leaves = [saved[f"arr_{i}"] for i in range(len(saved.files))]
-    _, structure = jax.tree.flatten(nnx.state(model))
-    nnx.update(model, jax.tree.unflatten(structure, leaves))
-    return model
-
 
 if __name__ == "__main__":
     print("JAX", jax.__version__, "devices:", jax.devices())
