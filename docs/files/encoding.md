@@ -40,7 +40,11 @@ def pack_board(board: chess.Board) -> np.ndarray:
     packed = np.empty(PACKED_SIZE, dtype=np.uint8)
 ```
 
-One empty row of 98 bytes, filled in three parts.
+**Does:** one `chess.Board` → one row of 98 bytes (`uint8`), filled in the
+three parts below. No feature maps are built.
+
+**Used:** by [lichess_evals.py](lichess_evals.md), once per position, when it
+builds its cache.
 
 ### Pieces: bytes 0-95
 
@@ -84,28 +88,34 @@ The square number 0-63, or 64 when there's no en passant square.
 ```python
 @jax.jit
 def unpack_planes(packed: jax.Array) -> jax.Array:
-    batch = packed.shape[0]
+    n = packed.shape[0]
 ```
 
-Takes a whole batch, `(batch, 98)`. `@jax.jit` compiles it to run on the GPU.
-Each part below rebuilds some of the 18 maps.
+**Does:** `(n, 98)` packed boards → `(n, 8, 8, 18)` float32 feature maps, for
+any `n`: 1 board, 1024, or all 3M if they fit on the GPU. It doesn't choose `n`
+or split anything up. `@jax.jit` compiles it to run on the GPU. Each part below
+rebuilds some of the 18 maps, for every row at once.
+
+**Used:** will be called by the training loop on each batch from
+[batches.py](batches.md), right before the model. Nothing calls it yet: that
+loop isn't written.
 
 ### Maps 0-11: pieces
 
 ```python
     pieces = jnp.unpackbits(packed[:, :96], axis=1, bitorder="little")
-    pieces = pieces.reshape(batch, 12, 8, 8).transpose(0, 2, 3, 1)
+    pieces = pieces.reshape(n, 12, 8, 8).transpose(0, 2, 3, 1)
 ```
 
 96 bytes → 768 bits (one per square per piece map) → 12 maps of 8x8. The
-transpose moves the map number last, `(batch, rank, file, map)`, the layout the
+transpose moves the map number last, `(n, rank, file, map)`, the layout the
 conv layers expect.
 
 ### Maps 12-16: turn and castling
 
 ```python
     flags = (packed[:, 96:97] >> jnp.arange(5, dtype=jnp.uint8)) & 1
-    flags = jnp.broadcast_to(flags[:, None, None, :], (batch, 8, 8, 5))
+    flags = jnp.broadcast_to(flags[:, None, None, :], (n, 8, 8, 5))
 ```
 
 Pulls out bits 0-4 of byte 96, then copies each one onto all 64 squares: a
@@ -114,7 +124,7 @@ whole map of 1s or 0s.
 ### Map 17: en passant
 
 ```python
-    ep = jax.nn.one_hot(packed[:, 97], 65)[:, :64].reshape(batch, 8, 8, 1)
+    ep = jax.nn.one_hot(packed[:, 97], 65)[:, :64].reshape(n, 8, 8, 1)
 ```
 
 The square number → 65 slots with a single `1`. Dropping slot 64 ("none")
@@ -126,4 +136,4 @@ means no en passant gives an all-zero map. Reshape to 8x8.
     return jnp.concatenate([pieces, flags, ep], axis=-1).astype(jnp.float32)
 ```
 
-12 + 5 + 1 = 18 maps, as floats: `(batch, 8, 8, 18)`, ready for conv1.
+12 + 5 + 1 = 18 maps, as floats: `(n, 8, 8, 18)`.

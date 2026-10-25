@@ -1,3 +1,4 @@
+"""Supervised: learn to predict a dataset's target scores, e.g. Stockfish's evaluations."""
 import time
 
 import numpy as np

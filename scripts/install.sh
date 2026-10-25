@@ -27,5 +27,5 @@ fi
 if ! command -v make > /dev/null; then
     echo "  Optional, for make data / make train:  sudo apt install make"
 fi
-echo "  make data    (or PYTHONPATH=src $VENV/bin/python -m sources.lichess_evals)"
-echo "  make train   (or $VENV/bin/python src/training.py)"
+echo "  make data DATASET=lichess_evals   (or PYTHONPATH=src $VENV/bin/python -m datasets.lichess_evals)"
+echo "  make train METHOD=supervised      (or PYTHONPATH=src $VENV/bin/python -m training.supervised)"

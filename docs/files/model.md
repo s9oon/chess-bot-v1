@@ -19,7 +19,7 @@ from encoding import NUM_PLANES
 Flax's `nnx` provides the layers. `CHANNELS` and `HIDDEN` are the default sizes;
 `NUM_PLANES` (18) is how many input feature maps a board has.
 
-## The model's size
+## Building the model
 
 ```python
 class ChessCNN(nnx.Module):
@@ -28,12 +28,14 @@ class ChessCNN(nnx.Module):
         self.hidden = hidden
 ```
 
-`channels` and `hidden` default to `config.py`, but can be passed in, so
-`load_model` can build a model the size a file was saved at. They're kept on the
-model so `save_model` can record them. `rngs` provides the random numbers for
-the starting weights.
+**Does:** builds the network's layers (below) with random starting weights.
+`channels` and `hidden` set its size and default to `config.py`; they're stored
+on the model. `rngs` provides the random numbers for the starting weights.
 
-## The conv layers
+**Used:** training will create one to train. `load_model` creates one at the
+size a saved file records.
+
+### The conv layers
 
 ```python
         input_maps = output_maps = channels
@@ -50,7 +52,7 @@ the starting weights.
 - conv1 reads 18 input feature maps, conv2 and conv3 read 64, which is why
   `input_maps = output_maps`: [many channels](../concepts/convolution.md#many-channels).
 
-## Batchnorm
+### Batchnorm
 
 ```python
         self.bn1 = nnx.BatchNorm(channels, rngs=rngs)
@@ -61,7 +63,7 @@ the starting weights.
 One per conv, with one scale and bias per output feature map:
 [what it does](../concepts/batch_normalization.md#what-it-does).
 
-## The head
+### The head
 
 ```python
         self.linear1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
@@ -73,7 +75,7 @@ One per conv, with one scale and bias per output feature map:
 [the head](../concepts/neural_network.md#the-head), and how linear differs from
 conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
 
-## The forward pass
+## Scoring boards: the forward pass
 
 ```python
     def __call__(self, x):
@@ -82,20 +84,27 @@ conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
         x = nnx.relu(self.bn3(self.conv3(x)))
 ```
 
-Each conv → batchnorm → ReLU: `(batch, 8, 8, 18)` → `(batch, 8, 8, 64)`.
-Batchnorm uses the batch's statistics in `model.train()` and its running
-averages in `model.eval()`: [train vs eval](../concepts/batch_normalization.md#train-mode-vs-eval-mode).
+**Does:** `(n, 8, 8, 18)` feature maps → `(n,)` scores in -1 .. +1, for any `n`,
+all at once. Called as `model(x)`.
+
+**Used:** inside `loss_fn` on each batch while training. Playing will call it
+on the positions the bot is choosing between.
+
+Each conv → batchnorm → ReLU: `(n, 8, 8, 18)` → `(n, 8, 8, 64)`. In
+`model.train()` batchnorm normalizes with the statistics of the `n` boards it
+was given; in `model.eval()` it uses its running averages instead:
+[train vs eval](../concepts/batch_normalization.md#train-mode-vs-eval-mode).
 
 ```python
-        x = x.reshape(x.shape[0], -1)  # flatten: (batch, 8, 8, CHANNELS) -> (batch, 8 * 8 * CHANNELS)
+        x = x.reshape(x.shape[0], -1)  # flatten: (n, 8, 8, CHANNELS) -> (n, 8 * 8 * CHANNELS)
         x = nnx.relu(self.linear1(x))
         x = self.linear2(x)
         x = jnp.tanh(x)
         return x[:, 0]
 ```
 
-Flatten to `(batch, 4096)`, run the head, squish into -1 .. +1 with tanh. The
-last line turns `(batch, 1)` into `(batch,)`: one score per board.
+Flatten to `(n, 4096)`, run the head, squish into -1 .. +1 with tanh. The
+last line turns `(n, 1)` into `(n,)`: one score per board.
 
 ## Saving
 
@@ -107,10 +116,12 @@ def save_model(model: ChessCNN, path: Path) -> None:
     np.savez(path, channels=model.channels, hidden=model.hidden, **arrays)
 ```
 
-`nnx.state(model)` is every array in the model: the learned weights and
-batchnorm's running averages. Each is saved under its name, like
-`conv1/kernel` or `bn1/mean`, plus `channels` and `hidden`. `mkdir` creates the
-folder if it doesn't exist yet.
+**Does:** writes every array in the model to a `.npz` at `path`, each under its
+name (`conv1/kernel`, `bn1/mean`, ...), plus `channels` and `hidden`. That's the
+learned weights and batchnorm's running averages. Creates the folder if it
+doesn't exist.
+
+**Used:** training will save to `data/weights/`. Nothing calls it yet.
 
 ## Loading
 
@@ -120,8 +131,15 @@ def load_model(path: Path) -> ChessCNN:
     model = ChessCNN(int(saved["channels"]), int(saved["hidden"]), rngs=nnx.Rngs(0))
 ```
 
-Builds a model at the size stored in the file, whatever `config.py` says now.
-Its weights start random.
+**Does:** reads a `.npz` written by `save_model` and returns a `ChessCNN` with
+those weights. Raises an error naming the layer if the file doesn't match the
+model.
+
+**Used:** to load a trained model for playing, or to continue training it.
+Nothing calls it yet.
+
+First it builds a model at the size stored in the file, whatever `config.py`
+says now. Its weights start random.
 
 ```python
     flat = nnx.to_flat_state(nnx.state(model))
@@ -139,8 +157,8 @@ Its weights start random.
 
 For every array the model has, finds the one with the same name in the file and
 checks its shape. A missing or wrong-shaped array (e.g. a file saved before a
-layer was added) stops with an error naming the layer. Otherwise the saved
-values replace the random ones.
+layer was added) stops with the error. Otherwise the saved values replace the
+random ones.
 
 ## Running it
 
@@ -149,5 +167,6 @@ if __name__ == "__main__":
     print("JAX", jax.__version__, "devices:", jax.devices())
 ```
 
-`python src/model.py` prints the JAX version and which devices (GPU/CPU) JAX can
-see. A quick check that the GPU is found.
+**Does:** prints the JAX version and which devices (GPU/CPU) JAX can see.
+
+**Used:** `python src/model.py`, a quick check that the GPU is found.

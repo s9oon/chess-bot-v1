@@ -1,4 +1,4 @@
-"""Shared by every source: turning (boards, targets) into batches for training."""
+"""Shared by every training method: turning a dataset's (boards, targets) into batches."""
 import numpy as np
 
 

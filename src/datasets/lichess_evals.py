@@ -1,8 +1,7 @@
-"""Source: the Lichess evaluation database (https://database.lichess.org/#evals).
+"""Dataset: the Lichess evaluation database (https://database.lichess.org/#evals).
 
 Reads only that format: one JSON object per line, {"fen": ..., "evals": [{"pvs": [{"cp" or "mate"}], "depth"}]}.
 Targets are Stockfish's score (white's view) as tanh(cp / CP_SCALE), or +-1 for a forced mate.
-Used by the distilled model.
 """
 import json
 import time
