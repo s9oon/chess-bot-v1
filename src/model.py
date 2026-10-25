@@ -42,11 +42,11 @@ class ChessCNN(nnx.Module):
         x = nnx.relu(self.bn2(self.conv2(x)))
         x = nnx.relu(self.bn3(self.conv3(x)))
 
-        x = x.reshape(x.shape[0], -1)  # flatten: (batch, 8, 8, CHANNELS) -> (batch, 8 * 8 * CHANNELS)
-        x = nnx.relu(self.linear1(x))  # (batch, HIDDEN): ReLU switches each combination on/off
-        x = self.linear2(x)            # (batch, 1): the score
+        x = x.reshape(x.shape[0], -1)  # flatten: (n, 8, 8, CHANNELS) -> (n, 8 * 8 * CHANNELS)
+        x = nnx.relu(self.linear1(x))  # (n, HIDDEN): ReLU switches each combination on/off
+        x = self.linear2(x)            # (n, 1): the score
         x = jnp.tanh(x)               # squish the score into -1 (black winning) .. +1 (white winning)
-        return x[:, 0]                 # (batch,): one score per board
+        return x[:, 0]                 # (n,): one score per board
 
 
 def save_model(model: ChessCNN, path: Path) -> None:
