@@ -1,3 +1,9 @@
+"""Source: the Lichess evaluation database (https://database.lichess.org/#evals).
+
+Reads only that format: one JSON object per line, {"fen": ..., "evals": [{"pvs": [{"cp" or "mate"}], "depth"}]}.
+Targets are Stockfish's score (white's view) as tanh(cp / CP_SCALE), or +-1 for a forced mate.
+Used by the distilled model.
+"""
 import json
 import time
 
@@ -55,14 +61,6 @@ def load_positions(n: int = NUM_POSITIONS) -> tuple[np.ndarray, np.ndarray]:
     # Saved for next run, so this slow step only ever happens once.
     np.savez(cache, boards=boards, targets=targets)
     return boards, targets
-
-
-def batches(boards: np.ndarray, targets: np.ndarray, batch_size: int, rng: np.random.Generator):
-    """One epoch of shuffled batches. Still packed: training unpacks them on the GPU."""
-    order = rng.permutation(len(boards))
-    for start in range(0, len(order) - batch_size + 1, batch_size):
-        idx = order[start:start + batch_size]
-        yield boards[idx], targets[idx]
 
 
 if __name__ == "__main__":
