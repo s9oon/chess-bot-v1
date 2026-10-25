@@ -6,6 +6,3 @@ __pycache__/
 
 # Training data (large, downloaded separately)
 data/
-
-# Trained weights
-checkpoints/
