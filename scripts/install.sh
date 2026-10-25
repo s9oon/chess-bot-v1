@@ -27,5 +27,5 @@ fi
 if ! command -v make > /dev/null; then
     echo "  Optional, for make data / make train:  sudo apt install make"
 fi
-echo "  make data    (or $VENV/bin/python data.py)"
-echo "  make train   (or $VENV/bin/python training.py)"
+echo "  make data    (or $VENV/bin/python src/data.py)"
+echo "  make train   (or $VENV/bin/python src/training.py)"
