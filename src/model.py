@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from flax import nnx
 
 from config import CHANNELS, HIDDEN
+from encoding import NUM_PLANES
 
 
 class ChessCNN(nnx.Module):
@@ -13,7 +14,7 @@ class ChessCNN(nnx.Module):
 
     def __init__(self, rngs: nnx.Rngs):
         # conv1 reads every input feature map from encoding.py (18: pieces, turn, castling, en passant).
-        self.conv1 = nnx.Conv(18, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
+        self.conv1 = nnx.Conv(NUM_PLANES, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
         self.conv2 = nnx.Conv(CHANNELS, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
         self.conv3 = nnx.Conv(CHANNELS, CHANNELS, (3, 3), padding="SAME", rngs=rngs)
 
