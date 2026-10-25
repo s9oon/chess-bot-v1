@@ -29,4 +29,5 @@ def train_step(model: ChessCNN, optimizer: nnx.Optimizer, boards, targets):
 
 
 if __name__ == "__main__":
+    print("This isnt implemented yet")
     pass
