@@ -6,8 +6,8 @@ PYTHON ?= $(or $(abspath $(firstword $(wildcard .venv/bin/python ../.venv/bin/py
 
 # Build (or check) the packed position cache in data/.
 data:
-	$(PYTHON) data.py
+	$(PYTHON) src/data.py
 
 # Train the model.
 train:
-	$(PYTHON) training.py
+	$(PYTHON) src/training.py
