@@ -1,36 +1,31 @@
 # encoding.py
 
-[`src/encoding.py`](../../src/encoding.py): turns a board into numbers the
-network can read: 18 input feature maps of 8x8 (12 piece maps, whose move, 4
-castling rights, en passant).
+[`src/encoding.py`](../../src/encoding.py)
 
-Two halves, one on each side of the CPU/GPU split:
+A board becomes 18 input feature maps of 8x8: 12 piece maps, whose move, 4
+castling rights, en passant. These are what conv1 reads:
+[many channels](../concepts/convolution.md#many-channels).
 
+## Packing, on the CPU
+
+```python
+masks = np.array([board.pieces_mask(piece_type, color)
+                  for color in (chess.WHITE, chess.BLACK)
+                  for piece_type in range(1, 7)], dtype="<u8")
+packed[:96] = masks.view(np.uint8)
 ```
-CPU:  chess.Board ──pack_board──> 98 bytes            (once per position, by a source)
-GPU:  (batch, 98) ──unpack_planes──> (batch, 8, 8, 18) (every batch, right before the model)
+
+python-chess stores each piece type as a 64-bit number, bit *n* = a piece on
+square *n* (a1 = 0). The 12 of them are the 12 piece maps, copied as 96 bytes.
+Byte 96 holds turn + castling as bits, byte 97 the en passant square: 98 bytes
+per board.
+
+## Unpacking, on the GPU
+
+```python
+pieces = jnp.unpackbits(packed[:, :96], axis=1, bitorder="little")
+pieces = pieces.reshape(batch, 12, 8, 8).transpose(0, 2, 3, 1)
 ```
 
-## `pack_board(board) -> np.ndarray`
-
-One board → `(98,)` uint8 on the CPU. Copies python-chess's 12 bitboards, the
-flags byte (turn + castling) and the en passant square. No maps are built here.
-
-## `unpack_planes(packed) -> jax.Array`
-
-`(batch, 98)` uint8 → `(batch, 8, 8, 18)` float32, compiled with `@jax.jit` to
-run on the GPU:
-
-1. bytes 0-95 → bits → the 12 piece maps,
-2. each flag bit → a whole map of that value (maps 12-16),
-3. byte 97 → a one-hot map with a single `1` on the en passant square (map 17).
-
-Passing a NumPy array in copies it to the GPU first; the output stays there.
-
-## Constants
-
-| Name | Value | What |
-|---|---|---|
-| `NUM_PLANES` | 18 | input feature maps per board |
-| `PACKED_SIZE` | 98 | bytes per packed board |
-| `NO_EP` | 64 | the en passant byte when there's no en passant square |
+A whole batch at once: bits → 12 maps of 8x8 → `(batch, 8, 8, 12)`. The flag
+bits each fill a whole map, and en passant becomes a single `1`, for 18 maps.

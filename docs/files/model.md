@@ -1,43 +1,55 @@
 # model.py
 
-[`src/model.py`](../../src/model.py): the network, and saving/loading its
-weights.
+[`src/model.py`](../../src/model.py)
 
-## `ChessCNN(channels=CHANNELS, hidden=HIDDEN, *, rngs)`
+## The conv layers
 
-```
-(batch, 8, 8, 18)
-  conv1 → bn1 → ReLU      (batch, 8, 8, 64)      convolution, batchnorm
-  conv2 → bn2 → ReLU      (batch, 8, 8, 64)
-  conv3 → bn3 → ReLU      (batch, 8, 8, 64)
-  flatten                 (batch, 4096)
-  linear1 → ReLU          (batch, 64)            the head
-  linear2 → tanh          (batch,)               one score per board, -1 .. +1
+```python
+input_maps = output_maps = channels
+
+self.conv1 = nnx.Conv(NUM_PLANES, output_maps, (3, 3), padding="SAME", rngs=rngs)
+self.conv2 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
+self.conv3 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
 ```
 
-Concepts: [the network](../concepts/neural_network.md),
-[convolution](../concepts/convolution.md),
-[batch normalization](../concepts/batch_normalization.md).
+- `output_maps` is the number of kernels, one output feature map each:
+  [what a convolution is](../concepts/convolution.md#what-a-convolution-is).
+- `(3, 3)` and `padding="SAME"` keep the board 8x8:
+  [our settings](../concepts/convolution.md#our-settings-in-the-papers-terms).
+- conv1 reads 18 input feature maps, conv2 and conv3 read 64, which is why
+  `input_maps = output_maps`: [many channels](../concepts/convolution.md#many-channels).
 
-`channels` and `hidden` default to [`config.py`](config.md), and can be passed
-in so `load_model` can build a model the size a file was saved at.
+## Batchnorm
 
-Call `model.train()` while training and `model.eval()` when playing
-([why](../concepts/batch_normalization.md#train-mode-vs-eval-mode)).
+```python
+self.bn1 = nnx.BatchNorm(channels, rngs=rngs)
 
-## `save_model(model, path)`
+x = nnx.relu(self.bn1(self.conv1(x)))  # conv1, then batchnorm, then ReLU
+```
 
-Saves every array to a `.npz` **by name** (`conv1/kernel`, `bn1/mean`, ...),
-plus `channels` and `hidden`: the learned weights and batchnorm's running
-averages.
+One scale and bias per output feature map, between the conv and ReLU:
+[what it does](../concepts/batch_normalization.md#what-it-does). This is why
+you call `model.train()` / `model.eval()`:
+[train vs eval](../concepts/batch_normalization.md#train-mode-vs-eval-mode).
 
-## `load_model(path) -> ChessCNN`
+## The head
 
-1. Builds a `ChessCNN` at the `channels` and `hidden` stored in the file.
-2. Checks every array the model expects is in the file, with the same shape.
-   If not, it stops with an error naming the layer.
-3. Overwrites the new model's random weights with the saved ones.
+```python
+self.linear1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
+self.linear2 = nnx.Linear(hidden, 1, rngs=rngs)
 
-## Running it
+x = x.reshape(x.shape[0], -1)  # flatten: (batch, 8, 8, 64) -> (batch, 4096)
+x = nnx.relu(self.linear1(x))
+x = self.linear2(x)
+x = jnp.tanh(x)
+```
 
-`python src/model.py` prints the JAX version and which devices it can see.
+Flatten, then linear layers that see the whole board and judge it into one
+score in -1 .. +1: [the head](../concepts/neural_network.md#the-head), and how
+linear differs from conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
+
+## Saving and loading
+
+`save_model` writes every array by name (`conv1/kernel`, `bn1/mean`, ...) plus
+`channels` and `hidden`. `load_model` builds a model at the file's size, checks
+every layer's name and shape, then loads the weights.
