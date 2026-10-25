@@ -1,13 +1,13 @@
 # encoding.py
 
 [`src/encoding.py`](../../src/encoding.py): turns a board into numbers the
-network can read. How the board is encoded and why:
-[concepts/encoding.md](../concepts/encoding.md).
+network can read: 18 input feature maps of 8x8 (12 piece maps, whose move, 4
+castling rights, en passant).
 
 Two halves, one on each side of the CPU/GPU split:
 
 ```
-CPU:  chess.Board ──pack_board──> 98 bytes            (once per position, cached by data.py)
+CPU:  chess.Board ──pack_board──> 98 bytes            (once per position, by a source)
 GPU:  (batch, 98) ──unpack_planes──> (batch, 8, 8, 18) (every batch, right before the model)
 ```
 

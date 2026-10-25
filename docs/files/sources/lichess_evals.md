@@ -1,13 +1,23 @@
-# data.py
+# sources/lichess_evals.py
 
-[`src/data.py`](../../src/data.py): reads the Lichess file, packs every
-position with [`pack_board`](encoding.md), works out each target, and caches
-the result.
+[`src/sources/lichess_evals.py`](../../../src/sources/lichess_evals.py): the
+distilled model's data. Reads the Lichess file, packs every position with
+[`pack_board`](../encoding.md), works out each target, and caches the result.
+
+**Reads one format only:** the [Lichess evaluation
+database](https://database.lichess.org/#evals), one JSON object per line:
+
+```json
+{"fen": "...", "evals": [{"pvs": [{"cp": 69, "line": "..."}, ...], "depth": 46}, ...]}
+```
+
+Each position comes from a Lichess game and is evaluated by Stockfish, possibly
+at several depths. Scores (`cp` in centipawns, or `mate` in N) are from white's
+point of view.
 
 ```
 evals_10M.jsonl ──build_positions (slow, once)──> data/packed_<N>.npz
 packed_<N>.npz  ──np.load (under a second)──────> boards (N, 98), targets (N,) in RAM
-                ──batches──> one batch at a time ──> GPU
 ```
 
 The cache is the work saved to disk: encoding 3M positions takes about 2.5
@@ -18,7 +28,8 @@ so they all fit in RAM.
 
 One Lichess line → the target score. Takes the **deepest** evaluation, its best
 line (`pvs[0]`), and turns the centipawns into `tanh(cp / CP_SCALE)`; a forced
-mate becomes ±1. Why: [loss function](../concepts/loss_function.md#targets-must-match-our-range).
+mate becomes ±1. That puts the targets in the same -1 .. +1 range as the
+model's tanh output.
 
 ## `build_positions(n) -> (boards, targets)`
 
@@ -31,18 +42,11 @@ RAM. Fills arrays reserved up front: `boards (n, 98)` uint8 and
 Loads `data/packed_<n>.npz` if it exists. If not, calls `build_positions` and
 saves the result there for next time.
 
-## `batches(boards, targets, batch_size, rng)`
-
-One epoch of shuffled batches, still packed. Training sends each batch to the
-GPU and unpacks it with [`unpack_planes`](encoding.md#unpack_planespacked---jaxarray).
-
 ## Running it
 
-`make data` (or `python src/data.py`) builds the cache if needed, then prints
-the shapes and how much RAM they use.
+`make data` builds the cache if needed, then prints the shapes and how much RAM
+they use.
 
-## Data source
+## Settings
 
-The [Lichess evaluation database](https://database.lichess.org/#evals): positions
-from Lichess games, each evaluated by Stockfish, as one JSON object per line.
-Scores are from white's point of view.
+`EVALS_FILE`, `NUM_POSITIONS` and `CP_SCALE` in [`config.py`](../config.md).

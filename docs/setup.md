@@ -13,10 +13,10 @@ This creates `.venv`, installs `requirements.txt`, and prints the command to dow
 ## Running
 
 ```bash
-make data    # pack positions into data/packed_<N>.npz (slow once, then loads in under a second)
+make data    # pack the Lichess evals into data/packed_<N>.npz (slow once, then loads in under a second)
 make train   # train the model
 ```
 
-Without `make`: `.venv/bin/python src/data.py` and `.venv/bin/python src/training.py`.
+Without `make`: `PYTHONPATH=src .venv/bin/python -m sources.lichess_evals` and `.venv/bin/python src/training.py`.
 
 Settings are in `src/config.py`.
