@@ -12,6 +12,10 @@ A set of models, each trained a different way, all playable online:
 - **Self-play:** learns only by playing against itself, with no human or engine knowledge.
 - **Human games:** learns purely from games people play against it online.
 
+## Models
+
+Trained weights for each model and version will be published under [Releases](https://github.com/s9oon/chess-bot/releases).
+
 ## Documentation
 
 For setup, development, training and more, see [`docs/`](docs/).
