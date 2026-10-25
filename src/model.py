@@ -17,10 +17,13 @@ class ChessCNN(nnx.Module):
         self.channels = channels
         self.hidden = hidden
 
+        # conv2 and conv3 read the previous conv's output feature maps, so input = output count.
+        input_maps = output_maps = channels
+
         # conv1 reads every input feature map from encoding.py (18: pieces, turn, castling, en passant).
-        self.conv1 = nnx.Conv(NUM_PLANES, channels, (3, 3), padding="SAME", rngs=rngs)
-        self.conv2 = nnx.Conv(channels, channels, (3, 3), padding="SAME", rngs=rngs)
-        self.conv3 = nnx.Conv(channels, channels, (3, 3), padding="SAME", rngs=rngs)
+        self.conv1 = nnx.Conv(NUM_PLANES, output_maps, (3, 3), padding="SAME", rngs=rngs)
+        self.conv2 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
+        self.conv3 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
 
         # Batch normalization after each conv: one per output feature map.
         # Use model.train() while training and model.eval() when playing.

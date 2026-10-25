@@ -11,7 +11,3 @@ data:
 # Train the model.
 train:
 	$(PYTHON) src/training.py
-
-# TODO: Upload weights
-
-# TODO: Save weights to dir

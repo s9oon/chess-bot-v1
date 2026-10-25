@@ -8,6 +8,7 @@ DATA_DIR = ROOT / "data"
 EVALS_FILE = DATA_DIR / "evals_10M.jsonl"  # Lichess positions with Stockfish evaluations
 NUM_POSITIONS = 3_000_000                  # how many positions to load and train on
 CP_SCALE = 400                             # targets = tanh(cp / CP_SCALE): 400 cp (4 pawns) -> 0.76
+WEIGHTS_DIR = DATA_DIR / "weights"         # saved models (.npz)
 
 # --- Model ---
 CHANNELS = 64  # kernels per conv layer = output feature maps per layer
