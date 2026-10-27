@@ -63,17 +63,27 @@ size a saved file records.
 One per conv, with one scale and bias per output feature map:
 [what it does](../concepts/batch_normalization.md#what-it-does).
 
-### The head
+### The heads
 
 ```python
-        self.linear1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
-        self.linear2 = nnx.Linear(hidden, 1, rngs=rngs)
+        self.value1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
+        self.value2 = nnx.Linear(hidden, 1, rngs=rngs)
+        self.policy = nnx.Linear(8 * 8 * channels, 64 * 64, rngs=rngs)
 ```
 
-`linear1` takes the flattened feature maps (8 x 8 x 64 = 4096) down to
-`hidden` (64); `linear2` takes those down to one score:
-[the head](../concepts/neural_network.md#the-head), and how linear differs from
-conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
+Two heads read the same flattened feature maps (8 x 8 x 64 = 4096 values),
+the AlphaZero layout ([Silver et al. 2017](https://arxiv.org/abs/1712.01815)):
+
+- **Value head**, who's winning: `value1` takes the 4096 values down to
+  `hidden` (64); `value2` takes those down to one score.
+- **Policy head**, which moves look good: `policy` gives one score per move,
+  from-square x to-square (64 x 64 = 4096). Most of those moves are illegal in
+  any given position; they get masked out outside the model. Promotions count
+  as queen. It has no hidden layer: squeezing through 64 numbers on the way to
+  4096 moves would be a bottleneck.
+
+More on heads: [the head](../concepts/neural_network.md#the-head), and how
+linear differs from conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
 
 ## Scoring boards: the forward pass
 
@@ -84,11 +94,13 @@ conv: [conv and linear](../concepts/neural_network.md#conv-and-linear).
         x = nnx.relu(self.bn3(self.conv3(x)))
 ```
 
-**Does:** `(n, 8, 8, 18)` feature maps → `(n,)` scores in -1 .. +1, for any `n`,
-all at once. Called as `model(x)`.
+**Does:** `(n, 8, 8, 18)` feature maps → `(policy, value)` for any `n`, all at
+once. `policy` is `(n, 4096)` raw move scores; `value` is `(n,)` scores in
+-1 .. +1. Called as `policy, value = model(x)`.
 
-**Used:** inside `loss_fn` on each batch while training. Playing will call it
-on the positions the bot is choosing between.
+**Used:** inside `loss_fn` on each batch while training. Search will call it on
+the positions it explores: the policy picks which moves to try, the value scores
+the positions.
 
 Each conv → batchnorm → ReLU: `(n, 8, 8, 18)` → `(n, 8, 8, 64)`. In
 `model.train()` batchnorm normalizes with the statistics of the `n` boards it
@@ -97,14 +109,22 @@ was given; in `model.eval()` it uses its running averages instead:
 
 ```python
         x = x.reshape(x.shape[0], -1)  # flatten: (n, 8, 8, CHANNELS) -> (n, 8 * 8 * CHANNELS)
-        x = nnx.relu(self.linear1(x))
-        x = self.linear2(x)
-        x = jnp.tanh(x)
-        return x[:, 0]
+
+        value = nnx.relu(self.value1(x))
+        value = self.value2(value)
+        value = jnp.tanh(value)[:, 0]
+
+        policy = self.policy(x)
+        return policy, value
 ```
 
-Flatten to `(n, 4096)`, run the head, squish into -1 .. +1 with tanh. The
-last line turns `(n, 1)` into `(n,)`: one score per board.
+Flatten to `(n, 4096)`, then both heads read it:
+
+- **Value:** hidden layer with ReLU, down to one score, squished into -1 .. +1
+  with tanh. `[:, 0]` turns `(n, 1)` into `(n,)`: one score per board.
+- **Policy:** one linear layer to `(n, 4096)`. These stay raw scores (logits),
+  any size. Turning them into probabilities (softmax over the legal moves only)
+  happens outside the model, because which moves are legal depends on the board.
 
 ## Saving
 

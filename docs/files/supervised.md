@@ -39,13 +39,14 @@ for the loop.
 
 ```python
 def loss_fn(model, boards, targets):
-    scores = model(boards)
+    _, scores = model(boards)
     return jnp.mean((scores - targets) ** 2)
 ```
 
 **Does:** runs the model on the boards it's given (any number), squares each
 score's error against its target, and averages them into one number: mean
-squared error.
+squared error. Only the value head's scores are used; the policy head's move
+scores are ignored, since the dataset has no moves to learn from.
 
 **Used:** inside `train_step`, on each batch. Training tries to make it as small
 as possible.
