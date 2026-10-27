@@ -31,11 +31,14 @@ class ChessCNN(nnx.Module):
         self.bn2 = nnx.BatchNorm(channels, rngs=rngs)
         self.bn3 = nnx.BatchNorm(channels, rngs=rngs)
 
-        # Head: linear layers that evaluate the patterns the convs found.
-        # linear1 is a hidden layer: 8 x 8 x channels flattened values -> hidden combinations.
-        # linear2 is the output layer: hidden combinations -> 1 score.
-        self.linear1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
-        self.linear2 = nnx.Linear(hidden, 1, rngs=rngs)
+        # Two heads read the same patterns the convs found.
+        # Value head: who's winning. value1 is a hidden layer: 8 x 8 x channels flattened values -> hidden combinations.
+        # value2 is its output layer: hidden combinations -> 1 score.
+        self.value1 = nnx.Linear(8 * 8 * channels, hidden, rngs=rngs)
+        self.value2 = nnx.Linear(hidden, 1, rngs=rngs)
+        # Policy head: one score per move, from-square x to-square (64 x 64 = 4096, most illegal in any position).
+        # No hidden layer: squeezing through `hidden` (64) on the way to 4096 moves would be a bottleneck.
+        self.policy = nnx.Linear(8 * 8 * channels, 64 * 64, rngs=rngs)
 
     def __call__(self, x):
         x = nnx.relu(self.bn1(self.conv1(x)))  # conv1, then batchnorm, then ReLU
@@ -43,10 +46,13 @@ class ChessCNN(nnx.Module):
         x = nnx.relu(self.bn3(self.conv3(x)))
 
         x = x.reshape(x.shape[0], -1)  # flatten: (n, 8, 8, CHANNELS) -> (n, 8 * 8 * CHANNELS)
-        x = nnx.relu(self.linear1(x))  # (n, HIDDEN): ReLU switches each combination on/off
-        x = self.linear2(x)            # (n, 1): the score
-        x = jnp.tanh(x)               # squish the score into -1 (black winning) .. +1 (white winning)
-        return x[:, 0]                 # (n,): one score per board
+
+        value = nnx.relu(self.value1(x))  # (n, HIDDEN): ReLU switches each combination on/off
+        value = self.value2(value)        # (n, 1): the score
+        value = jnp.tanh(value)[:, 0]     # (n,): squished into -1 (black winning) .. +1 (white winning)
+
+        policy = self.policy(x)  # (n, 4096): raw move scores (logits); masking and softmax happen outside
+        return policy, value
 
 
 def save_model(model: ChessCNN, path: Path) -> None:
