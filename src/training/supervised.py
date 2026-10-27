@@ -11,7 +11,7 @@ from model import ChessCNN
 
 
 def loss_fn(model, boards, targets):
-    scores = model(boards)
+    _, scores = model(boards)  # only the value head: the dataset has no move targets
     return jnp.mean((scores - targets) ** 2)
 
 
