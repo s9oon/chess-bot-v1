@@ -137,3 +137,49 @@ means no en passant gives an all-zero map. Reshape to 8x8.
 ```
 
 12 + 5 + 1 = 18 maps, as floats: `(n, 8, 8, 18)`.
+
+## Legal move probabilities, performed by the CPU
+
+```python
+def legal_priors(policy: np.ndarray, board: chess.Board) -> dict[chess.Move, float]:
+    legal = [move for move in board.legal_moves if move.promotion in (None, chess.QUEEN)]
+```
+
+**Does:** one board's policy scores from [model.py](model.md) (4096 of them,
+as a NumPy array) → a probability for each legal move, adding up to 1. Illegal
+moves aren't in the result, and neither are underpromotions (to rook, bishop
+or knight): from-square x to-square gives e7→e8 one slot, so all four
+promotions would share one score. Only the queen promotion keeps it, which
+means the bot never underpromotes. They're rarely the best move.
+
+**Used:** will be called by MCTS each time it reaches a new position, to decide
+which moves are worth trying (their priors). Nothing calls it yet.
+
+It runs on the CPU with NumPy because it works on one board and a few dozen
+moves at a time; sending that little work to the GPU costs more than it saves.
+
+### Finding each move's score
+
+```python
+    scores = policy[[move.from_square * 64 + move.to_square for move in legal]]
+```
+
+The policy head gives one score per from-square x to-square (64 x 64 = 4096),
+so a move's score is at `from_square * 64 + to_square`, e.g. e2→e4 is
+12 x 64 + 28 = 796. python-chess already numbers squares a1 = 0 .. h8 = 63.
+The same formula must be used when building training targets, or the network
+learns scores for the wrong moves.
+
+### Softmax
+
+```python
+    exps = np.exp(scores - scores.max())
+    probs = exps / exps.sum()
+    return dict(zip(legal, probs.tolist()))
+```
+
+Softmax turns scores of any size into probabilities: `exp` makes them all
+positive, dividing by the sum makes them add up to 1. Higher score → higher
+probability. Only the legal moves' scores go in, which is the same as masking
+the illegal ones out. Subtracting the largest score first keeps `exp` from
+overflowing and doesn't change the answer.
