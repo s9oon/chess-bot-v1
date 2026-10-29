@@ -16,7 +16,7 @@ Each plane is a yes/no question asked of every square, 1 for yes, 0 for no:
 
 The piece planes are **one-hot**: a square has a 1 in at most one of planes
 0–11. The board's layout is kept, 8x8, so a conv kernel sees neighbouring
-squares together ([convolution](convolution.md)). Rules that aren't about one
+squares together ([convolution](Convolution.md)). Rules that aren't about one
 square, like whose turn it is, fill a whole plane so every patch sees them.
 
 From [`encoding/planes.py`](../../src/chessbot/encoding/planes.py):

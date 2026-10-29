@@ -1,7 +1,7 @@
 # Policy and value
 
 The network's two outputs, from the two heads
-([neural_network.md](neural_network.md#the-heads)):
+([NeuralNetwork.md](NeuralNetwork.md#the-heads)):
 
 | Head | Answers | Output | Used by search to |
 |---|---|---|---|
@@ -23,7 +23,7 @@ From [`model/network.py`](../../src/chessbot/model/network.py):
 
 **tanh** squishes any number into -1 .. +1, so the score always has the same
 meaning: +1 white is winning, -1 black is, 0 even. Training targets are put in
-the same range ([training](training.md#targets)).
+the same range ([training](Training.md#targets)).
 
 ## Policy: one score per move
 

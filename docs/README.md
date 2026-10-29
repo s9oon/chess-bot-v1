@@ -1,15 +1,15 @@
 # Docs
 
-- [setup.md](setup.md): install, get the data, run it.
+- [Setup.md](Setup.md): install, get the data, run it.
 
 ## concepts/
 
 The ideas behind the code, each shown with the code that does it, and sources
 to read further.
 
-- [neural_network.md](concepts/neural_network.md): how the pieces fit together (start here)
-- [board_encoding.md](concepts/board_encoding.md): board → input feature maps (`encoding/planes.py`)
-- [convolution.md](concepts/convolution.md): kernels, patches, feature maps (`model/network.py`)
-- [batch_normalization.md](concepts/batch_normalization.md) (`model/network.py`)
-- [policy_and_value.md](concepts/policy_and_value.md): the two outputs, move indexes, softmax (`model/network.py`, `encoding/moves.py`)
-- [training.md](concepts/training.md): targets, loss, gradients, Adam, batches (`training/`, `datasets/`)
+- [NeuralNetwork.md](concepts/NeuralNetwork.md): how the pieces fit together (start here)
+- [BoardEncoding.md](concepts/BoardEncoding.md): board → input feature maps (`encoding/planes.py`)
+- [Convolution.md](concepts/Convolution.md): kernels, patches, feature maps (`model/network.py`)
+- [BatchNormalization.md](concepts/BatchNormalization.md) (`model/network.py`)
+- [PolicyAndValue.md](concepts/PolicyAndValue.md): the two outputs, move indexes, softmax (`model/network.py`, `encoding/moves.py`)
+- [Training.md](concepts/Training.md): targets, loss, gradients, Adam, batches (`training/`, `datasets/`)

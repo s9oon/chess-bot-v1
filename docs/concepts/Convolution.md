@@ -77,7 +77,7 @@ conv2/kernel  (3, 3, 64, 64)    64 kernels of 3 x 3 x 64
 
 One 3x3 conv sees a 3x3 area, two see **5x5**, three see **7x7**: the
 **receptive field**. No single number sees the whole 8x8 board, which is one
-reason the network ends with linear heads ([neural_network.md](neural_network.md#the-heads)).
+reason the network ends with linear heads ([NeuralNetwork.md](NeuralNetwork.md#the-heads)).
 
 ## Further reading
 

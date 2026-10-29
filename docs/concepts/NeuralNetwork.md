@@ -1,9 +1,9 @@
 # The neural network
 
 From board to a move policy and a score. Each part has its own page:
-[board encoding](board_encoding.md), [convolution](convolution.md),
-[batch normalization](batch_normalization.md),
-[policy and value](policy_and_value.md).
+[board encoding](BoardEncoding.md), [convolution](Convolution.md),
+[batch normalization](BatchNormalization.md),
+[policy and value](PolicyAndValue.md).
 
 ```
 input (8, 8, 18)                  the encoded board
@@ -75,7 +75,7 @@ every input to the output with its own weight:
 Two **heads** read that same flattened vector: the value head (who's winning)
 and the policy head (which moves look good). The body runs once and both share
 it, so the patterns it learns have to serve both. What each head outputs:
-[policy and value](policy_and_value.md).
+[policy and value](PolicyAndValue.md).
 
 ## Size
 
