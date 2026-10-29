@@ -36,6 +36,15 @@ We number moves by **from-square x to-square**: 64 x 64 = 4096. A move's
 score is at index `from_square * 64 + to_square`, e.g. e2→e4 is
 12 x 64 + 28 = 796. Most of the 4096 are illegal in any given position.
 
+```python
+def move_index(move: chess.Move) -> int:
+    return move.from_square * 64 + move.to_square
+```
+
+Everything that reads or writes the policy goes through
+[`move_index`](../../src/chessbot/encoding/moves.py), so the order is defined
+in one place.
+
 From-square x to-square can't tell promotions apart (e7→e8 is one index for
 queen, rook, bishop and knight), so only queen promotions are used.
 
@@ -57,18 +66,28 @@ probability at all. That's
 
 ```python
     legal = [move for move in board.legal_moves if move.promotion in (None, chess.QUEEN)]
-    scores = policy[[move.from_square * 64 + move.to_square for move in legal]]
+    scores = policy[[move_index(move) for move in legal]]
 
     exps = np.exp(scores - scores.max())
     probs = exps / exps.sum()
 ```
 
 Subtracting the largest score first keeps `exp` from overflowing and doesn't
-change the result. The probabilities are the **priors** MCTS will use: how
-promising each move looks before searching it.
+change the result. The probabilities are the **priors** MCTS uses: how
+promising each move looks before searching it ([MCTS](MCTS.md)).
 
-The same move index must be used when training the policy, or the network
-learns scores for the wrong moves.
+## The reverse: a training target
+
+Training goes the other way: `{move: probability}` → a 4096 array laid out like
+the policy head, 0 for every other move. That's `policy_target`:
+
+```python
+    target = np.zeros(NUM_MOVES, dtype=np.float32)
+    target[[move_index(move) for move in shares]] = list(shares.values())
+```
+
+It uses the same `move_index` as `legal_priors`, or the network would learn
+scores for the wrong moves.
 
 ## Further reading
 

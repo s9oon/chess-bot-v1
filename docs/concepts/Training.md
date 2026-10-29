@@ -1,10 +1,11 @@
 # Training
 
 Training adjusts the network's weights so its outputs get closer to
-**targets**: the outputs it should have given. Right now we train the value
-head **supervised**, on Stockfish's evaluations
-([`training/supervised.py`](../../src/chessbot/training/supervised.py)). The
-loop that runs it all isn't written yet.
+**targets**: the outputs it should have given. This page uses
+**supervised** training, the value head learning Stockfish's evaluations
+([`training/supervised.py`](../../src/chessbot/training/supervised.py)); its
+loop isn't written yet. The same ideas run [self-play](SelfPlay.md), where the
+targets come from the bot's own games instead.
 
 ## Targets
 
@@ -65,8 +66,7 @@ descent.
     return nnx.Optimizer(model, optax.adam(LEARNING_RATE), wrt=nnx.Param)
 ```
 
-`LEARNING_RATE` in `config.py` is still 0, so nothing would learn yet; 0.001
-is the usual starting point for Adam.
+`LEARNING_RATE` in `config.py` is 0.001, the usual starting point for Adam.
 
 ## Batches and epochs
 
