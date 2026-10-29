@@ -1,5 +1,12 @@
 # JAX with bundled CUDA 13 (pulls the nvidia-* wheels; no system CUDA needed)
 jax[cuda13]==0.12.0
 
+# Flax: neural network layers (nnx). Optax: optimizers (Adam).
+flax==0.12.10
+optax==0.2.8
+
+# NumPy: CPU arrays for encoding and the data cache
+numpy==2.5.4
+
 # python-chess: board, legal moves, PGN/FEN
 chess==1.11.2

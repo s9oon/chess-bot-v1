@@ -1,2 +1,8 @@
 # Python's compiled-code cache (rebuilt automatically)
 __pycache__/
+
+# Virtual environment made by scripts/install.sh
+.venv/
+
+# Training data (large, downloaded separately)
+data/

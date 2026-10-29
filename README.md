@@ -1,3 +1,21 @@
-this readme isnt good. branch playtest has a inference however youll need to train your own weights from the training-official branch.
-also requirements.txt should have the stuff to download <-- IT DOESNT no update will come either. Figure it out yourself, or wait for v2.
-v2 or v3 are on their way and I've got some cool plans for the engine models so stay tuned!
+# chess-bot
+
+A work-in-progress chess AI, built from scratch in [JAX](https://github.com/jax-ml/jax) and [Flax](https://github.com/google/flax).
+
+**Play online at:** coming soon
+
+## Plans
+
+A set of models, each trained a different way, all playable online:
+
+- **Distilled:** taught from other chess engines' evaluations in public datasets.
+- **Self-play:** learns only by playing against itself, with no human or engine knowledge.
+- **Human games:** learns purely from games people play against it online.
+
+## Models
+
+Trained weights for each model and version will be published under [Releases](https://github.com/s9oon/chess-bot/releases).
+
+## Documentation
+
+For setup, development, training and more, see [`docs/`](docs/).
