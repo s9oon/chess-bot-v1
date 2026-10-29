@@ -13,16 +13,17 @@ from flax import nnx
 
 from chessbot.config import (BATCH_SIZE, BUFFER_SIZE, GAMES_PER_ROUND, LEARNING_RATE, MAX_GAME_PLIES,
                              NUM_ROUNDS, STEPS_PER_ROUND, TEMPERATURE_PLIES, WEIGHTS_DIR)
-from chessbot.encoding.moves import NUM_MOVES, legal_priors, policy_target
-from chessbot.encoding.planes import PACKED_SIZE, pack_board, unpack_planes
-from chessbot.mcts.search import search
+from chessbot.engine.encoding import PACKED_SIZE, pack_board
+from chessbot.engine.moves import NUM_MOVES, legal_priors, policy_target
+from chessbot.engine.search import search
 from chessbot.model.checkpoint import load_model, save_model
+from chessbot.model.inputs import unpack_planes
 from chessbot.model.network import ChessCNN
 
 WEIGHTS_FILE = WEIGHTS_DIR / "self_play.npz"
 
 
-# --- Playing: the JAX model -> search ---
+# --- Playing: the JAX model -> search. Self-play's own inference, on the model being trained (no files). ---
 
 @nnx.jit
 def forward(model: ChessCNN, packed):

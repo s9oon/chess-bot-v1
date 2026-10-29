@@ -19,7 +19,7 @@ The piece planes are **one-hot**: a square has a 1 in at most one of planes
 squares together ([convolution](Convolution.md)). Rules that aren't about one
 square, like whose turn it is, fill a whole plane so every patch sees them.
 
-From [`encoding/planes.py`](../../src/chessbot/encoding/planes.py):
+From [`engine/encoding.py`](../../src/chessbot/engine/encoding.py):
 
 ```python
 # 0-11 pieces, 12 whose move, 13-16 castling rights, 17 en passant square.
@@ -49,7 +49,8 @@ Turn and castling are 5 more bits in byte 96, and the en passant square
 ## Unpacking: bits back to planes
 
 `unpack_planes` reverses it for a whole batch on the GPU, `(n, 98)` →
-`(n, 8, 8, 18)`:
+`(n, 8, 8, 18)`. It's JAX, so it lives with the model in
+[`model/inputs.py`](../../src/chessbot/model/inputs.py), not in the engine:
 
 ```python
     pieces = jnp.unpackbits(packed[:, :96], axis=1, bitorder="little")

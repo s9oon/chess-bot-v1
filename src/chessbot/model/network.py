@@ -3,7 +3,7 @@ import jax.numpy as jnp
 from flax import nnx
 
 from chessbot.config import CHANNELS, HIDDEN
-from chessbot.encoding.planes import NUM_PLANES
+from chessbot.engine.encoding import NUM_PLANES
 
 
 class ChessCNN(nnx.Module):
@@ -17,7 +17,7 @@ class ChessCNN(nnx.Module):
         # conv2 and conv3 read the previous conv's output feature maps, so input = output count.
         input_maps = output_maps = channels
 
-        # conv1 reads every input feature map from encoding/planes.py (18: pieces, turn, castling, en passant).
+        # conv1 reads every input feature map from engine/encoding.py (18: pieces, turn, castling, en passant).
         self.conv1 = nnx.Conv(NUM_PLANES, output_maps, (3, 3), padding="SAME", rngs=rngs)
         self.conv2 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
         self.conv3 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)

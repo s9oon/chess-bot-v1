@@ -6,7 +6,7 @@ that guess by looking ahead: it builds a **tree** of positions, one move per
 branch, and spends its time on the moves that look most promising.
 
 Ours is **PUCT**, the version AlphaZero uses, in
-[`mcts/search.py`](../../src/chessbot/mcts/search.py).
+[`engine/search.py`](../../src/chessbot/engine/search.py).
 
 ## The tree
 

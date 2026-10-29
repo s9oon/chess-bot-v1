@@ -42,7 +42,7 @@ def move_index(move: chess.Move) -> int:
 ```
 
 Everything that reads or writes the policy goes through
-[`move_index`](../../src/chessbot/encoding/moves.py), so the order is defined
+[`move_index`](../../src/chessbot/engine/moves.py), so the order is defined
 in one place.
 
 From-square x to-square can't tell promotions apart (e7→e8 is one index for
@@ -62,7 +62,7 @@ p_i = exp(s_i) / Σ_j exp(s_j)
 
 Taking the softmax over only the legal moves' scores gives illegal moves no
 probability at all. That's
-[`encoding/moves.py`](../../src/chessbot/encoding/moves.py):
+[`engine/moves.py`](../../src/chessbot/engine/moves.py):
 
 ```python
     legal = [move for move in board.legal_moves if move.promotion in (None, chess.QUEEN)]

@@ -1,12 +1,9 @@
 """The chess bot. Each folder is one part, importing only from the ones before it:
 
-    encoding  ->  model  ->  datasets  ->  training
-    encoding  ->  mcts   ------------->  training
-    (search never imports the model: training gives it an evaluate function)
+    engine  ->  model  ->  datasets  ->  training
 
-encoding  board <-> numbers (input planes, move indexes). No ML.
-model     the network and saving/loading its weights.
-mcts      Monte Carlo tree search, guided by the network's policy and value.
+engine    playing: board encoding, move indexes, MCTS. No JAX, no model: a port reimplements this.
+model     the JAX network, its input planes, saving/loading its weights.
 datasets  positions to learn from.
-training  ways to train the model.
+training  ways to train the model. Self-play also runs the model for search (its make_evaluate).
 """
