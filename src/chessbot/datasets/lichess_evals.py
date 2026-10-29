@@ -9,8 +9,8 @@ import time
 import numpy as np
 import chess
 
-from config import CP_SCALE, DATA_DIR, EVALS_FILE, NUM_POSITIONS
-from encoding import PACKED_SIZE, pack_board
+from chessbot.config import CP_SCALE, DATA_DIR, EVALS_FILE, NUM_POSITIONS
+from chessbot.encoding.planes import PACKED_SIZE, pack_board
 
 
 def eval_target(position: dict) -> float:

@@ -17,10 +17,10 @@ make data DATASET=lichess_evals    # prepare a dataset (pack it into data/, slow
 make train METHOD=supervised       # train with a method
 ```
 
-`DATASET` is a file in `src/datasets/`, `METHOD` a file in `src/training/`;
-leave either out to see the list.
+`DATASET` is a file in `src/chessbot/datasets/`, `METHOD` a file in
+`src/chessbot/training/`; leave either out to see the list.
 
-Without `make`: `PYTHONPATH=src .venv/bin/python -m datasets.lichess_evals` and
-`PYTHONPATH=src .venv/bin/python -m training.supervised`.
+Without `make`: `PYTHONPATH=src .venv/bin/python -m chessbot.datasets.lichess_evals` and
+`PYTHONPATH=src .venv/bin/python -m chessbot.training.supervised`.
 
-Settings are in `src/config.py`.
+Settings are in `src/chessbot/config.py`.

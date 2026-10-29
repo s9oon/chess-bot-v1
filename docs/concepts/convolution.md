@@ -28,11 +28,23 @@ Applying one kernel to **every** patch vector gives 64 numbers, laid out 8x8:
 one **output feature map**. Each kernel makes its own, so 64 kernels give 64
 output feature maps.
 
-## Our settings, in the paper's terms
+## Our conv layers
+
+From [`model/network.py`](../../src/chessbot/model/network.py):
+
+```python
+        input_maps = output_maps = channels
+
+        self.conv1 = nnx.Conv(NUM_PLANES, output_maps, (3, 3), padding="SAME", rngs=rngs)
+        self.conv2 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
+        self.conv3 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
+```
+
+Each argument in the paper's terms:
 
 | Code | Paper's term | Ours |
 |---|---|---|
-| first number | input channels (input feature maps) | 18 for conv1, 64 after |
+| first number | input channels (input feature maps) | 18 (`NUM_PLANES`) for conv1, 64 after |
 | second number | output channels, one per kernel | 64 (`CHANNELS`) |
 | `(3, 3)` | kernel size *k* | 3 |
 | `strides` (default) | unit strides, *s* = 1 | moves 1 square at a time |
@@ -54,11 +66,18 @@ The paper's figures show **one** input feature map and **one** kernel. Ours
 has more of both: **each kernel spans all input channels**. conv1's kernels are
 3 x 3 x 18 = **162** weights; conv2's and conv3's are 3 x 3 x 64 = **576**.
 
+You can see it in the saved weights' shapes, `(k, k, input channels, kernels)`:
+
+```
+conv1/kernel  (3, 3, 18, 64)    64 kernels of 3 x 3 x 18
+conv2/kernel  (3, 3, 64, 64)    64 kernels of 3 x 3 x 64
+```
+
 ## How far each layer sees
 
 One 3x3 conv sees a 3x3 area, two see **5x5**, three see **7x7**: the
 **receptive field**. No single number sees the whole 8x8 board, which is one
-reason the network ends with a linear head ([neural_network.md](neural_network.md#the-head)).
+reason the network ends with linear heads ([neural_network.md](neural_network.md#the-heads)).
 
 ## Further reading
 

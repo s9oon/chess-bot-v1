@@ -1,12 +1,9 @@
-from pathlib import Path
-
-import numpy as np
 import jax
 import jax.numpy as jnp
 from flax import nnx
 
-from config import CHANNELS, HIDDEN
-from encoding import NUM_PLANES
+from chessbot.config import CHANNELS, HIDDEN
+from chessbot.encoding.planes import NUM_PLANES
 
 
 class ChessCNN(nnx.Module):
@@ -20,7 +17,7 @@ class ChessCNN(nnx.Module):
         # conv2 and conv3 read the previous conv's output feature maps, so input = output count.
         input_maps = output_maps = channels
 
-        # conv1 reads every input feature map from encoding.py (18: pieces, turn, castling, en passant).
+        # conv1 reads every input feature map from encoding/planes.py (18: pieces, turn, castling, en passant).
         self.conv1 = nnx.Conv(NUM_PLANES, output_maps, (3, 3), padding="SAME", rngs=rngs)
         self.conv2 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
         self.conv3 = nnx.Conv(input_maps, output_maps, (3, 3), padding="SAME", rngs=rngs)
@@ -53,34 +50,6 @@ class ChessCNN(nnx.Module):
 
         policy = self.policy(x)  # (n, 4096): raw move scores (logits); masking and softmax happen outside
         return policy, value
-
-
-def save_model(model: ChessCNN, path: Path) -> None:
-    """Save every weight and batchnorm's running averages by name, plus the model's size."""
-    # Flat state: ("conv1", "kernel") -> array, for every Param and BatchStat in the model.
-    arrays = {"/".join(map(str, name)): np.asarray(variable.get_value())
-              for name, variable in nnx.to_flat_state(nnx.state(model))}
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, channels=model.channels, hidden=model.hidden, **arrays)
-
-
-def load_model(path: Path) -> ChessCNN:
-    """Build a ChessCNN the size the file was saved at, then overwrite its random weights with the saved ones."""
-    saved = np.load(path)
-    model = ChessCNN(int(saved["channels"]), int(saved["hidden"]), rngs=nnx.Rngs(0))
-
-    flat = nnx.to_flat_state(nnx.state(model))
-    for name, variable in flat:
-        key = "/".join(map(str, name))
-        # Catches files from an older architecture (a layer added, removed or resized).
-        if key not in saved:
-            raise ValueError(f"{path.name} has no weights for {key}")
-        if saved[key].shape != variable.get_value().shape:
-            raise ValueError(f"{path.name}: {key} is {saved[key].shape}, model expects {variable.get_value().shape}")
-        variable.set_value(jnp.asarray(saved[key]))
-
-    nnx.update(model, nnx.from_flat_state(flat))
-    return model
 
 
 if __name__ == "__main__":

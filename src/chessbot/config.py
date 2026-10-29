@@ -1,7 +1,7 @@
 """Every setting you might want to tweak, in one place."""
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent  # repo root (this file is in src/)
+ROOT = Path(__file__).parent.parent.parent  # repo root (this file is in src/chessbot/)
 
 # --- Data ---
 DATA_DIR = ROOT / "data"

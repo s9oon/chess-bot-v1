@@ -4,18 +4,12 @@
 
 ## concepts/
 
-The ideas behind the code, with sources to read further.
+The ideas behind the code, each shown with the code that does it, and sources
+to read further.
 
 - [neural_network.md](concepts/neural_network.md): how the pieces fit together (start here)
-- [convolution.md](concepts/convolution.md): kernels, patches, feature maps
-- [batch_normalization.md](concepts/batch_normalization.md)
-
-## files/
-
-Walks through the key code, pointing at the concept each part uses.
-
-- [model.md](files/model.md)
-- [encoding.md](files/encoding.md)
-- [lichess_evals.md](files/lichess_evals.md): dataset, the Lichess evaluation database
-- [supervised.md](files/supervised.md): training method, supervised
-- [batches.md](files/batches.md): batching, shared by every training method
+- [board_encoding.md](concepts/board_encoding.md): board → input feature maps (`encoding/planes.py`)
+- [convolution.md](concepts/convolution.md): kernels, patches, feature maps (`model/network.py`)
+- [batch_normalization.md](concepts/batch_normalization.md) (`model/network.py`)
+- [policy_and_value.md](concepts/policy_and_value.md): the two outputs, move indexes, softmax (`model/network.py`, `encoding/moves.py`)
+- [training.md](concepts/training.md): targets, loss, gradients, Adam, batches (`training/`, `datasets/`)
