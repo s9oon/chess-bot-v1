@@ -6,8 +6,8 @@ import jax.numpy as jnp
 import optax
 from flax import nnx
 
-from config import LEARNING_RATE
-from model import ChessCNN
+from chessbot.config import LEARNING_RATE
+from chessbot.model.network import ChessCNN
 
 
 def loss_fn(model, boards, targets):
