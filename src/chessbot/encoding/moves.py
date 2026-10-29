@@ -1,7 +1,6 @@
 import numpy as np
 import chess
 
-
 def legal_priors(policy: np.ndarray, board: chess.Board) -> dict[chess.Move, float]:
     """One board's policy scores (4096,) -> {legal move: probability}, probabilities summing to 1."""
     # Underpromotions are left out: from-square x to-square can't tell them apart from the queen promotion.
